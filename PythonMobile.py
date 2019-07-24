@@ -15,9 +15,9 @@ w.create_line(0, 0, canvas_width, y, fill="#476042")
 r = 50
 w.create_oval(100, 200, 100 + r, 100 + r, fill="blue", width=0.5)
 
-min_radius = 3;
-max_radius = 10;
-sideViewHeight = 25;
+min_radius = 3
+max_radius = 10
+sideViewHeight = 25
 
 
 class Offset:
@@ -41,16 +41,17 @@ class CenteredPart:
 
     height = 1
 
-class MobilePart ( CenteredPart ):
+
+class MobilePart(CenteredPart):
     def __init__(self, radius, color, gap):
         self.radius = radius
         self.color = color
         self.gap = gap
-#assert(radius != null),
-#assert(radius >= _min_radius),
-#assert(radius <= _max_radius),
-#assert(color != null)
-        weight =  2 * math.pi * radius * radius;
+        # assert(radius != null),
+        # assert(radius >= _min_radius),
+        # assert(radius <= _max_radius),
+        # assert(color != null)
+        weight = 2 * math.pi * radius * radius
 
     radius = 0
     weight = 0
