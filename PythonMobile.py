@@ -56,5 +56,6 @@ class MobilePart(CenteredPart):
     radius = 0
     weight = 0
 
-
 mainloop()
+
+
