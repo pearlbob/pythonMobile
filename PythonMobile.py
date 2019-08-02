@@ -9,23 +9,18 @@ black = '#000000'
 green = '#6bde54'
 red = '#cc3030'
 
-theta = 0.01
+theta = math.pi/256
+updatePeriod = int(round(1000 / 60))
 
 canvas_width = 800
 canvas_height = 600
-w = Canvas(master,
+canvas = Canvas(master,
            width=canvas_width,
            height=canvas_height)
-w.pack()
-
-y = int(canvas_height / 2)
-w.create_line(0, 0, canvas_width, y, fill="#476042")
-r = 50
-w.create_oval(100, 200, 100 + r, 100 + r, fill=blue, width=0.5)
+canvas.pack()
 
 min_radius = 3
 max_radius = 10
-sideViewHeight = 25
 
 
 class Offset:
@@ -38,16 +33,11 @@ class Offset:
 
 
 class CenteredPart:
-    def paint(self, canvas):
+    def paint(self):
         pass
 
     center = Offset(0, 0)
     weight = 0
-
-    def setHeight(self, height):
-        self.height = height
-
-    height = 1
 
 
 class MobilePart(CenteredPart):
@@ -61,11 +51,18 @@ class MobilePart(CenteredPart):
         # assert(color != null)
         self.weight = 2 * math.pi * radius * radius
 
+    def paint(self):
+        canvas.create_oval(self.center.x-self.radius, self.center.y-self.radius, self.center.x+self.radius,
+                           self.center.y+self.radius, fill=self.color, width=0.5)
+
     radius = 0
     weight = 0
 
+
 class CrossBar(CenteredPart):
     def __init__(self, partEnd, joinEnd):
+        self.partEnd = partEnd
+        self.joinEnd = joinEnd
         self.weight = partEnd.weight + joinEnd.weight
         self.balanceRatio = joinEnd.weight / self.weight
         d = (partEnd.center.x - joinEnd.center.x)
@@ -76,42 +73,25 @@ class CrossBar(CenteredPart):
             joinEnd.center.y * (1 - self.balanceRatio))
         self.partLength = d * self.balanceRatio
         self.joinLength = d * (1 - self.balanceRatio)
-        #assert((partEnd.weight * partLength - joinEnd.weight * joinLength).abs() < 1e-9)
+        # assert((partEnd.weight * partLength - joinEnd.weight * joinLength).abs() < 1e-9)
 
     # @override
-    # void paint(Canvas canvas) {
-    # //  draw the part
-    # partEnd.center = Offset(center.dx - partLength * cos(theta),
-    # center.dy - partLength * sin(theta));
-    # joinEnd.center = Offset(center.dx + joinLength * cos(theta),
-    # center.dy + joinLength * sin(theta));
-    #
-    # //  up view
-    # final paint = Paint();
-    # paint.color = Colors.black;
-    # paint.strokeWidth = 3;
-    # canvas.drawLine(partEnd.center, joinEnd.center, paint);
-    # canvas.drawCircle(center, 6, paint);
-    #
-    # //  side view
-    # double y = sideViewHeight + sideViewHeight * _height;
-    # canvas.drawLine(
-    # Offset(partEnd.center.dx, y), Offset(joinEnd.center.dx, y), paint);
-    # canvas.drawCircle(Offset(center.dx, y), 6, paint);
-    # canvas.drawLine(Offset(joinEnd.center.dx, y),
-    # Offset(joinEnd.center.dx, y + sideViewHeight), paint);
-    #
-    # //  recurse down
-    # partEnd.paint(canvas);
-    # joinEnd.paint(canvas);
-    # }
-
-    # @override
-    # void setHeight(int height) {
-    # super.setHeight(height);
-    # partEnd.setHeight(height + 1);
-    # joinEnd.setHeight(height + 1);
-    # }
+    def paint(self):
+        #  draw the part
+        self.partEnd.center = Offset(self.center.x - self.partLength * math.cos(self.theta), 
+                                     self.center.y - self.partLength * math.sin(self.theta))
+        self.joinEnd.center = Offset(self.center.x + self.joinLength * math.cos(self.theta),
+                                     self.center.y + self.joinLength * math.sin(self.theta))
+        #  up view
+        # final paint = Paint();
+        # paint.color = Colors.black;
+        # paint.strokeWidth = 3;
+        # canvas.drawLine(partEnd.center, joinEnd.center, paint);
+        canvas.create_line(self.partEnd.center.x, self.partEnd.center.y, self.joinEnd.center.x, self.joinEnd.center.y,
+                           fill="#476042")
+        #  recurse down
+        self.partEnd.paint()
+        self.joinEnd.paint()
 
     # MobilePart partEnd
     # CenteredPart joinEnd
@@ -122,20 +102,18 @@ class CrossBar(CenteredPart):
 
 
 #   parts list, note that the radius is in relative units here
-mobileParts = [ MobilePart(10, black, 4),
-    MobilePart(8.6, green, 4),
-    MobilePart(7.4, blue, 3),
-    MobilePart(6.4, red, 2),
-    MobilePart(5.6, green, 2),
-    MobilePart(4.8, blue, 0),
-    MobilePart(4.3, black, -2),
-    MobilePart(4, red, -4),
-    MobilePart(3.6, green, 2),
-    MobilePart(3, blue, 0)]
+mobileParts = [MobilePart(10, black, 4),
+               MobilePart(8.6, green, 4),
+               MobilePart(7.4, blue, 3),
+               MobilePart(6.4, red, 2),
+               MobilePart(5.6, green, 2),
+               MobilePart(4.8, blue, 0),
+               MobilePart(4.3, black, -2),
+               MobilePart(4, red, -4),
+               MobilePart(3.6, green, 2),
+               MobilePart(3, blue, 0)]
 
 crossBars = []
-
-
 
 #   initialize parts
 lastX = 0.5 * canvas_width
@@ -145,7 +123,7 @@ partLimit = len(mobileParts)
 
 #  locate parts initial position
 lastPart = None
-for i in range(len(mobileParts)-1, 0, -1):
+for i in range(len(mobileParts) - 1, 0, -1):
     part = mobileParts[i]
     if lastPart is not None:
         lastX += (lastPart.gap + lastPart.radius) / 100 * canvas_width
@@ -153,14 +131,10 @@ for i in range(len(mobileParts)-1, 0, -1):
 
     #  scale to display size
     r = part.radius / 100 * canvas_width
+    part.radius = r
     lastX += r
 
     part.center = Offset(lastX, y)
-
-i = 0
-for x in mobileParts:
-    print("{} {} {}".format(i, x.radius, x.color))
-    i += 1
 
 #  compute cross arms
 #  i.e. derive arm length from initial positions
@@ -168,7 +142,7 @@ for x in mobileParts:
 dTheta = math.pi / 25
 theta = 0
 lastCenteredPart = None
-for i in range(len(mobileParts)-1, 0,-1):
+for i in range(len(mobileParts) - 1, 0, -1):
     part = mobileParts[i]
     if lastCenteredPart is not None:
         crossBar = CrossBar(part, lastCenteredPart)
@@ -179,11 +153,18 @@ for i in range(len(mobileParts)-1, 0,-1):
     else:
         lastCenteredPart = part
 
-lastCenteredPart = crossBars[len(crossBars)-1]
+lastCenteredPart = crossBars[len(crossBars) - 1]
 if lastCenteredPart is not None:
     lastCenteredPart.center = Offset(0.5 * canvas_width, y)
-    lastCenteredPart.height = 0
 
 
-mainloop()
+#   once a vertical task
+def task():
+    #theta += math.pi/256
+    crossBars[0].paint()
+    master.after(updatePeriod, task)  # reschedule event in 2 seconds
 
+
+master.after(updatePeriod, task)
+
+master.mainloop()
