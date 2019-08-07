@@ -21,6 +21,8 @@ canvas = Canvas(master,
            height=canvas_height)
 canvas.pack()
 
+#   TODO: figure out how to use:  master.tk.call( "tk", 'scaling', 2.0 )
+
 #   not used
 #min_radius = 3
 #max_radius = 10
@@ -107,7 +109,7 @@ class CrossBar(CenteredPart):
 #   parts list, note that the radius is in relative units here
 mobileParts = [
     MobilePart(3, blue, 0),
-    MobilePart(3.6, green, 2),
+    MobilePart(3.6, green, 4),
     MobilePart(4, red, -4),
     MobilePart(4.3, black, -2),
     MobilePart(4.8, blue, 0),
